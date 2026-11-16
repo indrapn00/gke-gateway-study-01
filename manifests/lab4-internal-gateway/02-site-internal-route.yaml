@@ -1,0 +1,23 @@
+# Lab 4 - The site team publishes its app on the INTERNAL Gateway too.
+# Exactly the same HTTPRoute language as for the external Gateway - only the
+# parentRef (which Gateway) is different.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: site-internal-route
+  namespace: site-ns
+spec:
+  parentRefs:
+  - name: shared-int-gw
+    namespace: infra-ns
+    sectionName: http
+  hostnames:
+  - "site.internal.example"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: site
+      port: 8080

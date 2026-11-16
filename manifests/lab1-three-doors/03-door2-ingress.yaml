@@ -1,0 +1,29 @@
+# DOOR 2 - Kubernetes Ingress  (Layer 7: HTTP host + path routing)
+#
+# What GKE creates for you in Google Cloud (GKE Ingress controller):
+#   -> a CLASSIC Application Load Balancer (global, load balancing scheme EXTERNAL)
+#      * forwarding rule + target HTTP proxy + URL map + backend service + NEG
+#      * extra features are added with annotations + GKE-only CRDs
+#        (BackendConfig on the Service, FrontendConfig on the Ingress)
+#
+# Note: the upstream Kubernetes Ingress API is "frozen" - it gets no new features.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-ingress
+  namespace: lab1-three-doors
+  annotations:
+    # "gce" = external (internet-facing) load balancer
+    # "gce-internal" = internal Application Load Balancer inside your VPC
+    kubernetes.io/ingress.class: "gce"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: hello-svc
+            port:
+              number: 80

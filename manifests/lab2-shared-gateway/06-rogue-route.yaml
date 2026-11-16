@@ -1,0 +1,61 @@
+# Lab 2 - Guardrail demo: a team that is NOT allowed to use the shared Gateway.
+#
+# rogue-ns does NOT have the label shared-gateway-access="true", so the Gateway's
+# allowedRoutes rule rejects this HTTPRoute, even though it tries to grab the
+# store team's hostname. Expected route status: Accepted=False, reason NotAllowedByListeners.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rogue
+  namespace: rogue-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rogue
+  template:
+    metadata:
+      labels:
+        app: rogue
+    spec:
+      containers:
+      - name: whereami
+        image: us-docker.pkg.dev/google-samples/containers/gke/whereami:v1.2.28
+        ports:
+        - containerPort: 8080
+        env:
+        - name: METADATA
+          value: "rogue (should never be reachable)"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rogue
+  namespace: rogue-ns
+spec:
+  selector:
+    app: rogue
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: rogue-route
+  namespace: rogue-ns
+spec:
+  parentRefs:
+  - name: shared-ext-gw
+    namespace: infra-ns
+  hostnames:
+  - "store.example.com"            # tries to hijack the store team's hostname
+  rules:
+  - backendRefs:
+    - name: rogue
+      port: 8080

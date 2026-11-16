@@ -1,0 +1,43 @@
+# Lab 3 - GCPBackendPolicy: attach Google Cloud backend-service features to a
+# Kubernetes Service. Here: Cloud Armor (WAF / L7 filtering), request logging and
+# backend timeout.
+#
+# Pre-requisite: the Cloud Armor security policy "gke-gw-study-armor" must already
+# exist in the project (see hands-on-lab.md, Lab 3, step 1).
+#
+# Attach the policy to EVERY Service that the route can send traffic to.
+# If only store-v1 were protected, the 10% canary traffic to store-v2 (and the
+# "env: canary" header rule) would bypass Cloud Armor.
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: store-v1-backend-policy
+  namespace: store-ns
+spec:
+  default:
+    securityPolicy: gke-gw-study-armor   # Cloud Armor backend security policy name
+    timeoutSec: 30                      # backend service timeout
+    logging:
+      enabled: true
+      sampleRate: 1000000               # 1,000,000 = log 100% of requests
+  targetRef:
+    group: ""
+    kind: Service
+    name: store-v1
+---
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: store-v2-backend-policy
+  namespace: store-ns
+spec:
+  default:
+    securityPolicy: gke-gw-study-armor
+    timeoutSec: 30
+    logging:
+      enabled: true
+      sampleRate: 1000000
+  targetRef:
+    group: ""
+    kind: Service
+    name: store-v2

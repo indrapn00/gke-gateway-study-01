@@ -1,0 +1,16 @@
+# Lab 4 - GCPGatewayPolicy: Gateway-level (frontend) settings.
+# allowGlobalAccess=true lets clients in OTHER regions of the VPC (or on-prem via
+# VPN/Interconnect attached in another region) reach this regional internal load balancer.
+# The policy must be in the SAME namespace as the Gateway.
+apiVersion: networking.gke.io/v1
+kind: GCPGatewayPolicy
+metadata:
+  name: shared-int-gw-policy
+  namespace: infra-ns
+spec:
+  default:
+    allowGlobalAccess: true
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: shared-int-gw

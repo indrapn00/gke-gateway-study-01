@@ -1,0 +1,49 @@
+# Lab 2 - "site" team app (a different team, a different namespace).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: site
+  namespace: site-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: site
+  template:
+    metadata:
+      labels:
+        app: site
+    spec:
+      containers:
+      - name: whereami
+        image: us-docker.pkg.dev/google-samples/containers/gke/whereami:v1.2.28
+        ports:
+        - containerPort: 8080
+        env:
+        - name: METADATA
+          value: "site"
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: site
+  namespace: site-ns
+spec:
+  selector:
+    app: site
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080

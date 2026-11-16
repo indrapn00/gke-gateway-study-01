@@ -1,0 +1,37 @@
+# DOOR 3 - Kubernetes Gateway API  (Layer 7, role-oriented)
+#
+# What GKE creates for you in Google Cloud (GKE Gateway controller):
+#   -> a GLOBAL EXTERNAL Application Load Balancer (load balancing scheme EXTERNAL_MANAGED)
+#      Gateway   => forwarding rule (IP:port) + target HTTP proxy
+#      HTTPRoute => rules inside the URL map
+#      Service   => backend service + NEG (Pod IPs) + health check
+#
+# The "gatewayClassName" picks WHICH kind of Google Cloud load balancer you get.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: hello-gateway
+  namespace: lab1-three-doors
+spec:
+  gatewayClassName: gke-l7-global-external-managed
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: hello-route
+  namespace: lab1-three-doors
+spec:
+  parentRefs:                      # "attach me to this Gateway"
+  - name: hello-gateway
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:                   # "send matching traffic to this Service"
+    - name: hello-svc
+      port: 80

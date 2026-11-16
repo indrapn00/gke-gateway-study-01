@@ -1,0 +1,60 @@
+# Lab 2 - HTTPRoute owned by the "store" team (in store-ns), attached to the
+# shared Gateway owned by the platform team (in infra-ns).
+#
+# Shows:
+#   1. Cross-namespace attachment (route in store-ns -> Gateway in infra-ns)
+#   2. Host-based routing        (only requests for store.example.com)
+#   3. Header-based routing      (header "env: canary" -> always v2)
+#   4. Weighted traffic split    (everyone else: 90% v1, 10% v2)
+#   5. Header modification       (add a request header for the app, and a response header for the client)
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: store-route
+  namespace: store-ns
+spec:
+  parentRefs:
+  - name: shared-ext-gw
+    namespace: infra-ns            # the Gateway lives in another namespace
+    sectionName: http              # attach to the listener called "http"
+  hostnames:
+  - "store.example.com"
+  rules:
+  # Rule 1 - testers: requests that carry the header "env: canary" always go to v2.
+  # (More header matches = more specific = this rule wins over Rule 2.)
+  - matches:
+    - headers:
+      - name: env
+        value: canary
+    filters:
+    - type: ResponseHeaderModifier
+      responseHeaderModifier:
+        add:
+        - name: x-route-rule
+          value: "store-canary-header-match"
+    backendRefs:
+    - name: store-v2
+      port: 8080
+  # Rule 2 - everyone else: canary release, 90% to v1 and 10% to v2.
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    filters:
+    - type: RequestHeaderModifier        # the APP will see this header
+      requestHeaderModifier:
+        add:
+        - name: x-gateway-study
+          value: "added-by-gke-gateway"
+    - type: ResponseHeaderModifier       # the CLIENT will see this header
+      responseHeaderModifier:
+        add:
+        - name: x-route-rule
+          value: "store-weighted-split-90-10"
+    backendRefs:
+    - name: store-v1
+      port: 8080
+      weight: 90
+    - name: store-v2
+      port: 8080
+      weight: 10

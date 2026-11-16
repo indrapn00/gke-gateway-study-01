@@ -1,0 +1,90 @@
+# Real outputs captured from gke-gw-study-cluster (GKE Autopilot 1.36.4-gke.2377000, asia-southeast2)
+# Project gcp-demo-02-307713 - captured on 2026-11-16 (times in WIB, UTC+7).
+# Nothing in this file is edited, except these comment lines.
+
+########## Capture 1 - 10:18 WIB, right after the cluster became RUNNING ##########
+
+$ kubectl get gatewayclass
+No resources found
+
+$ kubectl get crd | grep -E 'gateway.networking.k8s.io|networking.gke.io'
+backendtlspolicies.gateway.networking.k8s.io           2026-11-16T03:17:29Z
+frontendconfigs.networking.gke.io                      2026-11-16T03:18:12Z
+gatewayclasses.gateway.networking.k8s.io               2026-11-16T03:17:29Z
+gateways.gateway.networking.k8s.io                     2026-11-16T03:17:29Z
+gcpagentgateways.networking.gke.io                     2026-11-16T03:17:25Z
+gcpauthzextensions.networking.gke.io                   2026-11-16T03:17:25Z
+gcpauthzpolicies.networking.gke.io                     2026-11-16T03:17:25Z
+gcpbackendpolicies.networking.gke.io                   2026-11-16T03:17:26Z
+gcpedgeextensions.networking.gke.io                    2026-11-16T03:17:26Z
+gcpgatewaypolicies.networking.gke.io                   2026-11-16T03:17:26Z
+gcphttpfilters.networking.gke.io                       2026-11-16T03:17:27Z
+gcpinferencepoolimports.networking.gke.io              2026-11-16T03:17:24Z
+gcproutingextensions.networking.gke.io                 2026-11-16T03:17:27Z
+gcptrafficdistributionpolicies.networking.gke.io       2026-11-16T03:17:27Z
+gcptrafficextensions.networking.gke.io                 2026-11-16T03:17:28Z
+gcpwasmplugins.networking.gke.io                       2026-11-16T03:17:28Z
+gkenetworkparamsets.networking.gke.io                  2026-11-16T03:16:50Z
+healthcheckpolicies.networking.gke.io                  2026-11-16T03:17:28Z
+httproutes.gateway.networking.k8s.io                   2026-11-16T03:17:30Z
+l4lbconfigs.networking.gke.io                          2026-11-16T03:18:12Z
+lbpolicies.networking.gke.io                           2026-11-16T03:17:28Z
+managedcertificates.networking.gke.io                  2026-11-16T03:18:24Z
+networkloggings.networking.gke.io                      2026-11-16T03:16:43Z
+networks.networking.gke.io                             2026-11-16T03:16:50Z
+nodetopologies.networking.gke.io                       2026-11-16T03:16:50Z
+redirectservices.networking.gke.io                     2026-11-16T03:16:42Z
+referencegrants.gateway.networking.k8s.io              2026-11-16T03:17:31Z
+serviceattachments.networking.gke.io                   2026-11-16T03:18:10Z
+servicenetworkendpointgroups.networking.gke.io         2026-11-16T03:18:10Z
+tlsroutes.gateway.networking.k8s.io                    2026-11-16T03:17:31Z
+
+$ kubectl get nodes -o wide
+No resources found
+# (Autopilot adds nodes only when Pods need them.)
+
+########## Lab 1, steps 1.1-1.2 (Door 3 not applied yet) - 10:18 WIB ##########
+
+$ kubectl apply -f manifests/lab1-three-doors/00-namespace.yaml
+namespace/lab1-three-doors created
+$ kubectl apply -f manifests/lab1-three-doors/01-hello-app.yaml
+deployment.apps/hello created
+service/hello-svc created
+$ kubectl apply -f manifests/lab1-three-doors/02-door1-service-loadbalancer.yaml
+service/hello-lb created
+$ kubectl apply -f manifests/lab1-three-doors/03-door2-ingress.yaml
+Warning: annotation "kubernetes.io/ingress.class" is deprecated, please use 'spec.ingressClassName' instead
+ingress.networking.k8s.io/hello-ingress created
+
+########## Capture 2 - about 1 minute later (10:19 WIB) ##########
+
+$ kubectl get gatewayclass
+NAME                                            CONTROLLER                                   ACCEPTED   AGE
+gke-l7-global-external-managed                  networking.gke.io/gateway                    True       10s
+gke-l7-gxlb                                     networking.gke.io/gateway                    True       10s
+gke-l7-regional-external-managed                networking.gke.io/gateway                    True       10s
+gke-l7-rilb                                     networking.gke.io/gateway                    True       10s
+gke-passthrough-lb-external-managed             networking.gke.io/persistent-ip-controller   True       31s
+gke-passthrough-lb-internal-managed             networking.gke.io/persistent-ip-controller   True       31s
+gke-persistent-fast-regional-external-managed   networking.gke.io/persistent-ip-controller   True       30s
+gke-persistent-fast-regional-internal-managed   networking.gke.io/persistent-ip-controller   True       30s
+gke-persistent-regional-external-managed        networking.gke.io/persistent-ip-controller   True       32s
+gke-persistent-regional-internal-managed        networking.gke.io/persistent-ip-controller   True       31s
+
+$ kubectl get crd | grep -iE "grpcroute|backendconfig"
+backendconfigs.cloud.google.com                        2026-11-16T03:18:11Z
+# (No grpcroutes CRD was installed in this cluster version.)
+
+$ kubectl get pods,svc,ingress -n lab1-three-doors -o wide
+NAME                         READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+pod/hello-5d9c86d549-4b5r2   0/1     Pending   0          43s   <none>   <none>   <none>           <none>
+pod/hello-5d9c86d549-w8dhz   0/1     Pending   0          43s   <none>   <none>   <none>           <none>
+
+NAME                TYPE           CLUSTER-IP   EXTERNAL-IP   PORT(S)        AGE   SELECTOR
+service/hello-lb    LoadBalancer   10.22.2.20   <pending>     80:30843/TCP   43s   app=hello
+service/hello-svc   ClusterIP      10.22.1.94   <none>        80/TCP         43s   app=hello
+
+NAME                                      CLASS    HOSTS   ADDRESS   PORTS   AGE
+ingress.networking.k8s.io/hello-ingress   <none>   *                 80      42s
+# (Pods were Pending while Autopilot added the first node. Note the ClusterIPs
+#  come from the services secondary range 10.22.0.0/22.)

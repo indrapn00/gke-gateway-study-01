@@ -1,0 +1,6 @@
+# Lab 1 - "One app, three doors"
+# A Namespace is just a folder inside the cluster that groups related objects.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab1-three-doors

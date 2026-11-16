@@ -1,0 +1,29 @@
+# Lab 2 - One SHARED Gateway, owned by the platform team, used by many app teams.
+#
+#   infra-ns  -> platform / network team owns the Gateway (the "front door")
+#   store-ns  -> "store" app team owns its Deployments, Services and HTTPRoute
+#   site-ns   -> "site"  app team owns its Deployments, Services and HTTPRoute
+#   rogue-ns  -> a team that is NOT allowed to use the shared Gateway (no label)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: infra-ns
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: store-ns
+  labels:
+    shared-gateway-access: "true"    # the Gateway only accepts routes from namespaces with this label
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: site-ns
+  labels:
+    shared-gateway-access: "true"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rogue-ns                     # NO label -> its routes will be rejected by the Gateway

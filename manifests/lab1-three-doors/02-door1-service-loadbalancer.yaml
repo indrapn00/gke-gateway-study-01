@@ -1,0 +1,21 @@
+# DOOR 1 - Kubernetes Service of type LoadBalancer  (Layer 4: IP + TCP port only)
+#
+# What GKE creates for you in Google Cloud:
+#   -> an EXTERNAL PASSTHROUGH NETWORK LOAD BALANCER (regional, L4)
+#      * 1 forwarding rule with its OWN public IP (one IP per Service)
+#      * backends are the cluster NODES; the node then forwards the packet to a Pod
+#      * no TLS termination, no URL/host/header routing, no Cloud Armor WAF
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-lb
+  namespace: lab1-three-doors
+spec:
+  type: LoadBalancer
+  selector:
+    app: hello
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 8080

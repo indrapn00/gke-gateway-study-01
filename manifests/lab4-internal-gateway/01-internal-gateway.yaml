@@ -1,0 +1,24 @@
+# Lab 4 - Same Gateway API, different GatewayClass => different load balancer.
+#
+# gke-l7-rilb = REGIONAL INTERNAL Application Load Balancer (INTERNAL_MANAGED).
+#   * private IP from the cluster subnet (10.20.0.0/24 in this lab)
+#   * Envoy proxies run in the region and use the PROXY-ONLY SUBNET
+#     (gke-gw-study-proxy-only-subnet, 10.20.2.0/23) - it must exist BEFORE this Gateway.
+#   * reachable only from inside the VPC (or from connected networks)
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: shared-int-gw
+  namespace: infra-ns
+spec:
+  gatewayClassName: gke-l7-rilb
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            shared-gateway-access: "true"

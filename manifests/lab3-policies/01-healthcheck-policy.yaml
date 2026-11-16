@@ -1,0 +1,51 @@
+# Lab 3 - HealthCheckPolicy: tune the Google Cloud health check that the load
+# balancer uses for a backend Service (instead of using annotations).
+#
+# One policy per Service. The policy must be in the SAME namespace as the Service.
+# Rules enforced by the CRD: timeoutSec <= checkIntervalSec, and the
+# "<type>HealthCheck" block must match config.type.
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: store-v1-healthcheck
+  namespace: store-ns
+spec:
+  default:
+    checkIntervalSec: 10
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 3
+    logConfig:
+      enabled: true                          # health check logs in Cloud Logging
+    config:
+      type: HTTP
+      httpHealthCheck:
+        portSpecification: USE_SERVING_PORT  # probe the same port that serves traffic (8080)
+        requestPath: /healthz                # whereami answers "OK" here
+  targetRef:
+    group: ""
+    kind: Service
+    name: store-v1
+---
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: store-v2-healthcheck
+  namespace: store-ns
+spec:
+  default:
+    checkIntervalSec: 10
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 3
+    logConfig:
+      enabled: true
+    config:
+      type: HTTP
+      httpHealthCheck:
+        portSpecification: USE_SERVING_PORT
+        requestPath: /healthz
+  targetRef:
+    group: ""
+    kind: Service
+    name: store-v2

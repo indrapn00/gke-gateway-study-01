@@ -1,0 +1,21 @@
+# Lab 2 - The shared, internet-facing Gateway (owned by the platform team in infra-ns).
+#
+# One Gateway = one Google Cloud load balancer (one public IP) that many teams share.
+# The platform team decides WHO may attach routes using "allowedRoutes".
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: shared-ext-gw
+  namespace: infra-ns
+spec:
+  gatewayClassName: gke-l7-global-external-managed   # global external Application Load Balancer
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Selector                 # only namespaces that match the label below
+        selector:
+          matchLabels:
+            shared-gateway-access: "true"
