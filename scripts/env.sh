@@ -3,6 +3,11 @@
 # Usage:  source scripts/env.sh
 # Change PROJECT_ID / REGION here if you run the lab somewhere else.
 
+# Ensure gcloud/kubectl are on PATH in non-login shells where the SDK lives in ~/google-cloud-sdk/bin
+if ! command -v gcloud >/dev/null 2>&1 && [[ -d "${HOME}/google-cloud-sdk/bin" ]]; then
+  export PATH="${HOME}/google-cloud-sdk/bin:${PATH}"
+fi
+
 export PROJECT_ID="gcp-demo-02-307713"
 export REGION="asia-southeast2"                       # Jakarta
 
